@@ -1,17 +1,15 @@
 # RazorPageShopManager Part 2: Turn This App Into An Identity Provider (Auth API)
 
-Yes, this is possible.
-
-If your goal is:
+Goal:
 
 - keep this app as user management (users/roles/permissions)
 - expose a central login page for other applications
 - redirect users back with tokens (JWT)
 - support consent screen (Allow/Deny)
 
-then your app needs to become an OAuth2/OpenID Connect Authorization Server.
+=> Turn app to an OAuth2/OpenID Connect Authorization Server.
 
-Since you do not want IdentityServer, the practical choice in .NET is:
+Do not use IdentityServer, the practical choice in .NET is:
 
 - ASP.NET Core Identity for user accounts, roles, and local login UI
 - OpenIddict for OAuth2/OIDC endpoints and token issuance
