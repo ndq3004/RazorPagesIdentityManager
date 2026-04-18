@@ -379,15 +379,15 @@ Once the context inherits from `IdentityDbContext<ApplicationUser>`, generate a 
 Run these commands from the solution folder or the project folder.
 
 ```powershell
-dotnet ef migrations add AddIdentityTables --project .\RazorPageShopManager
-dotnet ef database update --project .\RazorPageShopManager
+dotnet ef migrations add AddIdentityTables --project .\RazorPageIdentityManager
+dotnet ef database update --project .\RazorPageIdentityManager
 ```
 
 This will create the SQL Server tables for Identity in the same database referenced by:
 
 ```json
 "ConnectionStrings": {
-  "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=RazorPageShopManager;Trusted_Connection=True;MultipleActiveResultSets=true"
+  "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=RazorPageIdentityManager;Trusted_Connection=True;MultipleActiveResultSets=true"
 }
 ```
 
