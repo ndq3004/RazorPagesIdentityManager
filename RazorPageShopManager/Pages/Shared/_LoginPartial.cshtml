@@ -1,8 +1,8 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @using RazorPageShopManager.Entities
 
-@inject SignInManager<ApplicaitonUser> SignInManager
-@inject UserManager<ApplicaitonUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
 
 <ul class="navbar-nav">
 @if (SignInManager.IsSignedIn(User))

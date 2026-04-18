@@ -9,7 +9,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Add identity services
-builder.Services.AddDefaultIdentity<RazorPageShopManager.Entities.ApplicaitonUser>(
+builder.Services.AddDefaultIdentity<RazorPageShopManager.Entities.ApplicationUser>(
     options =>
     {
         options.SignIn.RequireConfirmedAccount = true;
@@ -19,6 +19,7 @@ builder.Services.AddDefaultIdentity<RazorPageShopManager.Entities.ApplicaitonUse
         //options.Password.RequireUppercase = true;
         options.Password.RequiredLength = 6;
     })
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>();
 
 builder.Services.AddRazorPages();
@@ -42,5 +43,10 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapRazorPages();
+
+using (var scope = app.Services.CreateScope())
+{
+    await RazorPageShopManager.Databases.SeedData.SeedRolesAsync(scope.ServiceProvider);
+}
 
 app.Run();

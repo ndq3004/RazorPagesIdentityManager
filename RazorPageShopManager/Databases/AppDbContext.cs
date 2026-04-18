@@ -5,7 +5,7 @@ using RazorPageShopManager.Entities;
 
 namespace RazorPageShopManager.Databases
 {
-    public class AppDbContext : IdentityDbContext<ApplicaitonUser>
+    public class AppDbContext : IdentityDbContext<ApplicationUser>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 

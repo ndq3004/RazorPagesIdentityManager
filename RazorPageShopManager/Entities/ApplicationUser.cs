@@ -2,7 +2,7 @@
 
 namespace RazorPageShopManager.Entities
 {
-    public class ApplicaitonUser : IdentityUser
+    public class ApplicationUser : IdentityUser
     {
 
     }

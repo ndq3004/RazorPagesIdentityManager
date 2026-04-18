@@ -7,4 +7,20 @@
 <div class="text-center">
     <h1 class="display-4">Welcome</h1>
     <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <div>@Model.CurrentUser?.UserName</div>
+    @if (!string.IsNullOrEmpty(Model.RoleName))
+    {
+        <div>Role: @Model.RoleName</div>
+    }else
+    {
+        <div>Add Role to this account</div>
+        <form method="post" asp-page-handler="Role">
+            <select name="roleName">
+                <option value="Admin">Admin</option>
+                <option value="Manager">Manager</option>
+                <option value="Staff">Staff</option>
+            </select>
+            <button type="submit">Submit</button>
+        </form>
+    }
 </div>
