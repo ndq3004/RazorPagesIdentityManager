@@ -11,7 +11,7 @@
     @if (!string.IsNullOrEmpty(Model.RoleName))
     {
         <div>Role: @Model.RoleName</div>
-    }else
+    }else if (Model.CurrentUser != null)
     {
         <div>Add Role to this account</div>
         <form method="post" asp-page-handler="Role">
