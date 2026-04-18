@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using RazorPageShopManager.Entities;
+using RazorPageIdentityManager.Entities;
 using System.Security.Claims;
 
-namespace RazorPageShopManager.Pages
+namespace RazorPageIdentityManager.Pages
 {
     public class IndexModel : PageModel
     {

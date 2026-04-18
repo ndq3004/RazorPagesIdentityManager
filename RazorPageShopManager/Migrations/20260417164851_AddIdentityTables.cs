@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace RazorPageShopManager.Migrations
+namespace RazorPageIdentityManager.Migrations
 {
     /// <inheritdoc />
     public partial class AddIdentityTables : Migration

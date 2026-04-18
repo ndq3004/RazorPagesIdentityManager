@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using RazorPageShopManager.Entities;
+using RazorPageIdentityManager.Entities;
 
-namespace RazorPageShopManager.Databases.EntityTypeConfigurations
+namespace RazorPageIdentityManager.Databases.EntityTypeConfigurations
 {
     public class ProductConfiguration : IEntityTypeConfiguration<Product>
     {

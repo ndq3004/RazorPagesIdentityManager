@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 
-namespace RazorPageShopManager.Entities
+namespace RazorPageIdentityManager.Entities
 {
     public class ApplicationUser : IdentityUser
     {

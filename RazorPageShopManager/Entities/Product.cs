@@ -1,4 +1,4 @@
-﻿namespace RazorPageShopManager.Entities
+﻿namespace RazorPageIdentityManager.Entities
 {
     public class Product
     {

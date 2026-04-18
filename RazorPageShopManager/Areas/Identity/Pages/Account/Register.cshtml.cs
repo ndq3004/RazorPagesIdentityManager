@@ -18,9 +18,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
-using RazorPageShopManager.Entities;
+using RazorPageIdentityManager.Entities;
 
-namespace RazorPageShopManager.Areas.Identity.Pages.Account
+namespace RazorPageIdentityManager.Areas.Identity.Pages.Account
 {
     public class RegisterModel : PageModel
     {

@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using RazorPageShopManager.Databases.EntityTypeConfigurations;
-using RazorPageShopManager.Entities;
+using RazorPageIdentityManager.Databases.EntityTypeConfigurations;
+using RazorPageIdentityManager.Entities;
 
-namespace RazorPageShopManager.Databases
+namespace RazorPageIdentityManager.Databases
 {
     public class AppDbContext : IdentityDbContext<ApplicationUser>
     {

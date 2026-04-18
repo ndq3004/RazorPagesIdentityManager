@@ -8,9 +8,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
-using RazorPageShopManager.Entities;
+using RazorPageIdentityManager.Entities;
 
-namespace RazorPageShopManager.Areas.Identity.Pages.Account.Manage
+namespace RazorPageIdentityManager.Areas.Identity.Pages.Account.Manage
 {
     public class Disable2faModel : PageModel
     {

@@ -10,9 +10,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
-using RazorPageShopManager.Entities;
+using RazorPageIdentityManager.Entities;
 
-namespace RazorPageShopManager.Areas.Identity.Pages.Account
+namespace RazorPageIdentityManager.Areas.Identity.Pages.Account
 {
     public class ConfirmEmailChangeModel : PageModel
     {

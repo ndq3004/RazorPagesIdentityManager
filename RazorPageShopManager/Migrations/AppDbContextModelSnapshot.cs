@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using RazorPageShopManager.Databases;
+using RazorPageIdentityManager.Databases;
 
 #nullable disable
 
-namespace RazorPageShopManager.Migrations
+namespace RazorPageIdentityManager.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     partial class AppDbContextModelSnapshot : ModelSnapshot
@@ -159,7 +159,7 @@ namespace RazorPageShopManager.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("RazorPageShopManager.Entities.ApplicaitonUser", b =>
+            modelBuilder.Entity("RazorPageIdentityManager.Entities.ApplicaitonUser", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
@@ -224,7 +224,7 @@ namespace RazorPageShopManager.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("RazorPageShopManager.Entities.Product", b =>
+            modelBuilder.Entity("RazorPageIdentityManager.Entities.Product", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -262,7 +262,7 @@ namespace RazorPageShopManager.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("RazorPageShopManager.Entities.ApplicaitonUser", null)
+                    b.HasOne("RazorPageIdentityManager.Entities.ApplicaitonUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -271,7 +271,7 @@ namespace RazorPageShopManager.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("RazorPageShopManager.Entities.ApplicaitonUser", null)
+                    b.HasOne("RazorPageIdentityManager.Entities.ApplicaitonUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -286,7 +286,7 @@ namespace RazorPageShopManager.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("RazorPageShopManager.Entities.ApplicaitonUser", null)
+                    b.HasOne("RazorPageIdentityManager.Entities.ApplicaitonUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -295,7 +295,7 @@ namespace RazorPageShopManager.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("RazorPageShopManager.Entities.ApplicaitonUser", null)
+                    b.HasOne("RazorPageIdentityManager.Entities.ApplicaitonUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)

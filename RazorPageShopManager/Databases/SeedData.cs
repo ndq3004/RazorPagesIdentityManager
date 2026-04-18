@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 
-namespace RazorPageShopManager.Databases
+namespace RazorPageIdentityManager.Databases
 {
     public static class SeedData
     {

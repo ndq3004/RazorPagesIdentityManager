@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using RazorPageShopManager.Databases;
+using RazorPageIdentityManager.Databases;
 using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,7 +9,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Add identity services
-builder.Services.AddDefaultIdentity<RazorPageShopManager.Entities.ApplicationUser>(
+builder.Services.AddDefaultIdentity<RazorPageIdentityManager.Entities.ApplicationUser>(
     options =>
     {
         options.SignIn.RequireConfirmedAccount = true;
@@ -46,7 +46,7 @@ app.MapRazorPages();
 
 using (var scope = app.Services.CreateScope())
 {
-    await RazorPageShopManager.Databases.SeedData.SeedRolesAsync(scope.ServiceProvider);
+    await RazorPageIdentityManager.Databases.SeedData.SeedRolesAsync(scope.ServiceProvider);
 }
 
 app.Run();
