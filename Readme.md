@@ -1,4 +1,4 @@
-# RazorPageShopManager: Convert to ASP.NET Core Identity
+# RazorPageIdentityManager: Convert to ASP.NET Core Identity
 
 This project is currently a plain Razor Pages application with Entity Framework Core and a custom `Login` page. If you want to turn it into an ASP.NET Core Identity project without using IdentityServer, the correct approach is to use the built-in ASP.NET Core Identity system with cookie authentication.
 
@@ -10,7 +10,7 @@ This guide shows the steps to migrate the current project.
 
 ## 1. Install the required packages
 
-Add the Identity and EF Core design packages to `RazorPageShopManager.csproj`.
+Add the Identity and EF Core design packages to `RazorPageIdentityManager.csproj`.
 
 Use versions that match your .NET 8 application. Your project currently targets `net8.0`, so keep the EF Core packages on `8.x` as well.
 
@@ -41,10 +41,10 @@ Notes:
 You can install with CLI:
 
 ```powershell
-dotnet add .\RazorPageShopManager\package Microsoft.AspNetCore.Identity.EntityFrameworkCore --version 8.0.26
-dotnet add .\RazorPageShopManager\package Microsoft.AspNetCore.Identity.UI --version 8.0.26
-dotnet add .\RazorPageShopManager\package Microsoft.EntityFrameworkCore.Design --version 8.0.26
-dotnet add .\RazorPageShopManager\package Microsoft.EntityFrameworkCore.Tools --version 8.0.26
+dotnet add .\RazorPageIdentityManager\package Microsoft.AspNetCore.Identity.EntityFrameworkCore --version 8.0.26
+dotnet add .\RazorPageIdentityManager\package Microsoft.AspNetCore.Identity.UI --version 8.0.26
+dotnet add .\RazorPageIdentityManager\package Microsoft.EntityFrameworkCore.Design --version 8.0.26
+dotnet add .\RazorPageIdentityManager\package Microsoft.EntityFrameworkCore.Tools --version 8.0.26
 ```
 
 ---
@@ -58,7 +58,7 @@ Example file: `Entities/ApplicationUser.cs`
 ```csharp
 using Microsoft.AspNetCore.Identity;
 
-namespace RazorPageShopManager.Entities
+namespace RazorPageIdentityManager.Entities
 {
 	public class ApplicationUser : IdentityUser
 	{
@@ -85,10 +85,10 @@ Update `Databases/AppContext.cs` like this:
 ```csharp
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using RazorPageShopManager.Databases.EntityTypeConfigurations;
-using RazorPageShopManager.Entities;
+using RazorPageIdentityManager.Databases.EntityTypeConfigurations;
+using RazorPageIdentityManager.Entities;
 
-namespace RazorPageShopManager.Databases
+namespace RazorPageIdentityManager.Databases
 {
 	public class AppDbContext : IdentityDbContext<ApplicationUser>
 	{
@@ -122,8 +122,8 @@ Replace the setup with this pattern:
 ```csharp
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using RazorPageShopManager.Databases;
-using RazorPageShopManager.Entities;
+using RazorPageIdentityManager.Databases;
+using RazorPageIdentityManager.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -270,7 +270,7 @@ dotnet tool install -g dotnet-aspnet-codegenerator
 Then scaffold Identity:
 
 ```powershell
-dotnet aspnet-codegenerator identity -dc RazorPageShopManager.Databases.AppDbContext --files "Account.Login;Account.Register;Account.Logout"
+dotnet aspnet-codegenerator identity -dc RazorPageIdentityManager.Databases.AppDbContext --files "Account.Login;Account.Register;Account.Logout"
 ```
 
 After scaffolding, the project will contain an `Areas/Identity` folder.
@@ -322,7 +322,7 @@ Example partial:
 
 ```cshtml
 @using Microsoft.AspNetCore.Identity
-@using RazorPageShopManager.Entities
+@using RazorPageIdentityManager.Entities
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 
@@ -412,7 +412,7 @@ Example:
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace RazorPageShopManager.Pages
+namespace RazorPageIdentityManager.Pages
 {
 	[Authorize]
 	public class PrivacyModel : PageModel
@@ -470,7 +470,7 @@ This is usually done in `Program.cs` during startup or in a separate seed class.
 After migration, your project should look more like this:
 
 ```text
-RazorPageShopManager/
+RazorPageIdentityManager/
   Areas/
 	Identity/
 	  Pages/
@@ -524,7 +524,7 @@ For this project, plain ASP.NET Core Identity is the correct choice.
 
 For this specific codebase, the safest order is:
 
-1. Fix package versions in `RazorPageShopManager.csproj`.
+1. Fix package versions in `RazorPageIdentityManager.csproj`.
 2. Add `ApplicationUser`.
 3. Update `Databases/AppContext.cs`.
 4. Update `Program.cs`.
