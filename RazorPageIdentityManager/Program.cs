@@ -71,7 +71,22 @@ builder.Services.AddOpenIddict()
         options.UseAspNetCore();
     });
 
+builder.Services.AddControllers();
 builder.Services.AddRazorPages();
+
+// Add CORS to accept all localhost origins
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.SetIsOriginAllowed(origin => 
+                origin.StartsWith("http://localhost") || 
+                origin.StartsWith("https://localhost"))
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
 
 var app = builder.Build();
 
@@ -88,14 +103,17 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapControllers();
 app.MapRazorPages();
 
 using (var scope = app.Services.CreateScope())
 {
-    await RazorPageIdentityManager.Databases.SeedData.SeedRolesAsync(scope.ServiceProvider);
+    await SeedData.SeedRolesAsync(scope.ServiceProvider);
+    await OpenIddictSeedData.SeedClientsAsync(scope.ServiceProvider);
 }
 
 app.Run();

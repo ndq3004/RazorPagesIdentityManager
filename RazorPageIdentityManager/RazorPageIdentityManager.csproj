@@ -20,6 +20,10 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.23" />
+    <PackageReference Include="OpenIddict.AspNetCore" Version="7.4.0" />
+    <PackageReference Include="OpenIddict.EntityFrameworkCore" Version="7.4.0" />
+    <PackageReference Include="OpenIddict.Server.AspNetCore" Version="7.4.0" />
+    <PackageReference Include="OpenIddict.Validation.AspNetCore" Version="7.4.0" />
   </ItemGroup>
 
 </Project>

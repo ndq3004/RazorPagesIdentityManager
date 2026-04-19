@@ -1,4 +1,4 @@
-# RazorPageShopManager Part 2: Turn This App Into An Identity Provider (Auth API)
+# RazorPageIdentityManager Part 2: Turn This App Into An Identity Provider (Auth API)
 
 Goal:
 
@@ -42,10 +42,10 @@ Flow:
 Install OpenIddict packages in this project:
 
 ```powershell
-dotnet add .\RazorPageShopManager\package OpenIddict.AspNetCore
-dotnet add .\RazorPageShopManager\package OpenIddict.EntityFrameworkCore
-dotnet add .\RazorPageShopManager\package OpenIddict.Server.AspNetCore
-dotnet add .\RazorPageShopManager\package OpenIddict.Validation.AspNetCore
+dotnet add .\RazorPageIdentityManager\package OpenIddict.AspNetCore
+dotnet add .\RazorPageIdentityManager\package OpenIddict.EntityFrameworkCore
+dotnet add .\RazorPageIdentityManager\package OpenIddict.Server.AspNetCore
+dotnet add .\RazorPageIdentityManager\package OpenIddict.Validation.AspNetCore
 ```
 
 Keep your existing ASP.NET Core Identity + EF Core packages from Part 1.
@@ -198,6 +198,240 @@ For consent, create a page (for example `/Consent`) showing:
 
 When allowed, create a `ClaimsPrincipal` and call `SignIn(...)` using OpenIddict server scheme.
 
+### Recommended hybrid pattern (use both safely)
+
+Yes, you can implement both approaches together.
+
+- Use a controller for protocol endpoints (`/connect/authorize`, `/connect/token`, `/connect/userinfo`, `/connect/logout`).
+- Use Razor Pages for user-facing UI (login pages from Identity UI, plus your custom consent page).
+
+Important rule:
+
+- Do not implement the same protocol endpoint in both places.
+- Example: keep `/connect/authorize` in one controller only, and let Razor Pages only render consent/login UI.
+
+### Sample controller for OAuth/OIDC protocol endpoints
+
+File suggestion: `Controllers/AuthorizationController.cs`
+
+```csharp
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using OpenIddict.Abstractions;
+using OpenIddict.Server.AspNetCore;
+using static OpenIddict.Abstractions.OpenIddictConstants;
+
+namespace RazorPageIdentityManager.Controllers;
+
+public class AuthorizationController : Controller
+{
+	private readonly UserManager<Entities.ApplicationUser> _userManager;
+
+	public AuthorizationController(UserManager<Entities.ApplicationUser> userManager)
+	{
+		_userManager = userManager;
+	}
+
+	[HttpGet("~/connect/authorize")]
+	[HttpPost("~/connect/authorize")]
+	public async Task<IActionResult> Authorize()
+	{
+		var request = HttpContext.GetOpenIddictServerRequest()
+			?? throw new InvalidOperationException("The OpenIddict server request cannot be retrieved.");
+
+		var result = await HttpContext.AuthenticateAsync(IdentityConstants.ApplicationScheme);
+		if (result.Succeeded is false)
+		{
+			var redirectUri = Request.PathBase + Request.Path + Request.QueryString;
+			return Challenge(
+				properties: new AuthenticationProperties { RedirectUri = redirectUri },
+				authenticationSchemes: new[] { IdentityConstants.ApplicationScheme });
+		}
+
+		var user = await _userManager.GetUserAsync(result.Principal)
+			?? throw new InvalidOperationException("The user cannot be retrieved.");
+		if (user == null)
+		{
+			return Forbid(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+		}
+
+		var submit = Request.HasFormContentType ? Request.Form["submit"].ToString() : "";
+
+		var consentRequired = (request.Prompt ?? string.Empty)
+			.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+			.Contains("consent", StringComparer.Ordinal);
+
+		if (consentRequired && !string.Equals(submit, "allow", StringComparison.OrdinalIgnoreCase))
+		{
+			var returnUrl = Request.PathBase + Request.Path + Request.QueryString;
+			return RedirectToPage("/Consent", new
+			{
+				returnUrl,
+				clientId = request.ClientId,
+				scope = request.Scope
+			});
+		}
+
+		if (string.Equals(submit, "deny", StringComparison.OrdinalIgnoreCase))
+		{
+			return Forbid(new AuthenticationProperties
+			{
+				Items =
+				{
+					[OpenIddictServerAspNetCoreConstants.Properties.Error] = Errors.AccessDenied,
+					[OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] = "The user denied the consent."
+				}
+			}, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+		}
+
+		var identity = new ClaimsIdentity(
+			TokenValidationParameters.DefaultAuthenticationType,
+			Claims.Name,
+			Claims.Role);
+
+		identity.SetClaim(Claims.Subject, await _userManager.GetUserIdAsync(user));
+		identity.SetClaim(Claims.Email, user.Email);
+		identity.SetClaim(Claims.Name, user.UserName);
+
+		identity.SetScopes(request.GetScopes());
+		identity.SetResources("resource_server");
+
+		identity.SetDestinations(claim => claim.Type switch
+		{
+			Claims.Name or Claims.Email => [Destinations.AccessToken, Destinations.IdentityToken],
+			Claims.Role => [Destinations.AccessToken],
+			_ => [Destinations.AccessToken]
+		});
+
+		var principal = new ClaimsPrincipal(identity);
+		return SignIn(principal, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+	}
+
+	[HttpPost("~/connect/token")]
+	public async Task<IActionResult> Exchange()
+	{
+		var request = HttpContext.GetOpenIddictServerRequest()
+			?? throw new InvalidOperationException("OpenID Connect request cannot be retrieved.");
+
+		if (request.IsAuthorizationCodeGrantType() || request.IsRefreshTokenGrantType())
+		{
+			var authenticateResult = await HttpContext.AuthenticateAsync(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+			if (!authenticateResult.Succeeded)
+			{
+				return Forbid(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+			}
+
+			return SignIn(authenticateResult.Principal!, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+		}
+
+		throw new InvalidOperationException("The specified grant type is not supported.");
+	}
+
+	[HttpGet("~/connect/userinfo")]
+	[HttpPost("~/connect/userinfo")]
+	public async Task<IActionResult> UserInfo()
+	{
+		var authenticateResult = await HttpContext.AuthenticateAsync(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+		if (!authenticateResult.Succeeded)
+		{
+			return Challenge(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+		}
+
+		var principal = authenticateResult.Principal!;
+		return Ok(new
+		{
+			sub = principal.GetClaim(Claims.Subject),
+			name = principal.GetClaim(Claims.Name),
+			email = principal.GetClaim(Claims.Email)
+		});
+	}
+
+	[HttpGet("~/connect/logout")]
+	[HttpPost("~/connect/logout")]
+	public IActionResult Logout()
+	{
+		return SignOut(
+			new AuthenticationProperties { RedirectUri = "/" },
+			IdentityConstants.ApplicationScheme,
+			OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+	}
+}
+```
+
+Notes for the controller sample:
+
+- In production, resolve resources dynamically instead of hard-coding `resource_server`.
+- Add role/claim loading and authorization checks before issuing tokens.
+- If you support machine-to-machine clients, add handling for `client_credentials` grant.
+
+### Sample Razor Pages UI for consent screen
+
+File suggestion: `Pages/Consent.cshtml`
+
+```cshtml
+@page
+@model RazorPageIdentityManager.Pages.ConsentModel
+@{
+	ViewData["Title"] = "Consent";
+}
+
+<h2>Consent</h2>
+
+<p><strong>Application:</strong> @Model.ClientId</p>
+<p><strong>Requested scopes:</strong> @Model.Scope</p>
+
+<form method="post" action="@Model.ReturnUrl">
+	<input type="hidden" name="submit" value="allow" />
+	<button type="submit" class="btn btn-primary">Allow</button>
+</form>
+
+<form method="post" action="@Model.ReturnUrl" style="margin-top: 8px;">
+	<input type="hidden" name="submit" value="deny" />
+	<button type="submit" class="btn btn-outline-secondary">Deny</button>
+</form>
+```
+
+File suggestion: `Pages/Consent.cshtml.cs`
+
+```csharp
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace RazorPageIdentityManager.Pages;
+
+[Authorize]
+public class ConsentModel : PageModel
+{
+	[BindProperty(SupportsGet = true)]
+	public string ReturnUrl { get; set; } = "/";
+
+	[BindProperty(SupportsGet = true)]
+	public string ClientId { get; set; } = "unknown-client";
+
+	[BindProperty(SupportsGet = true)]
+	public string Scope { get; set; } = "";
+
+	public IActionResult OnGet()
+	{
+		if (string.IsNullOrWhiteSpace(ReturnUrl))
+		{
+			return BadRequest("Missing returnUrl.");
+		}
+
+		return Page();
+	}
+}
+```
+
+Why this split works well:
+
+- Controller owns protocol correctness and token issuance.
+- Razor Pages own user-facing UX.
+- You avoid route conflicts while still keeping a clean page-based UI.
+
 ---
 
 ## 7. Register client applications (clientId, redirect URIs, consent type)
@@ -226,6 +460,68 @@ ConsentType: Explicit
 ```
 
 If `ConsentType` is explicit, your authorize flow will show confirmation page before issuing code.
+
+### Startup seeder wiring (Step 7 practical guide)
+
+Use this pattern so clients are automatically registered when the app starts.
+
+1. Create a seeder class (for example `Databases/OpenIddictSeedData.cs`) with an idempotent method:
+
+```csharp
+public static class OpenIddictSeedData
+{
+	public static async Task SeedClientsAsync(IServiceProvider serviceProvider)
+	{
+		var manager = serviceProvider.GetRequiredService<IOpenIddictApplicationManager>();
+
+		if (await manager.FindByClientIdAsync("admin-portal") is null)
+		{
+			await manager.CreateAsync(new OpenIddictApplicationDescriptor
+			{
+				ClientId = "admin-portal",
+				DisplayName = "Admin Portal",
+				ConsentType = OpenIddictConstants.ConsentTypes.Explicit,
+				RedirectUris = { new Uri("https://localhost:5173/callback") },
+				PostLogoutRedirectUris = { new Uri("https://localhost:5173/") },
+				Permissions =
+				{
+					OpenIddictConstants.Permissions.Endpoints.Authorization,
+					OpenIddictConstants.Permissions.Endpoints.Token,
+					OpenIddictConstants.Permissions.Endpoints.EndSession,
+					OpenIddictConstants.Permissions.GrantTypes.AuthorizationCode,
+					OpenIddictConstants.Permissions.ResponseTypes.Code,
+					OpenIddictConstants.Permissions.Prefixes.Scope + OpenIddictConstants.Scopes.OpenId,
+					OpenIddictConstants.Permissions.Prefixes.Scope + OpenIddictConstants.Scopes.Profile,
+					OpenIddictConstants.Permissions.Prefixes.Scope + OpenIddictConstants.Scopes.Email,
+					OpenIddictConstants.Permissions.Prefixes.Scope + "orders.read"
+				},
+				Requirements =
+				{
+					OpenIddictConstants.Requirements.Features.ProofKeyForCodeExchange
+				}
+			});
+		}
+	}
+}
+```
+
+2. Call the seeder in `Program.cs` after building the app, inside a service scope.
+
+```csharp
+using (var scope = app.Services.CreateScope())
+{
+	await SeedData.SeedRolesAsync(scope.ServiceProvider);
+	await OpenIddictSeedData.SeedClientsAsync(scope.ServiceProvider);
+}
+```
+
+3. Keep this seeder idempotent:
+
+- check by `ClientId` before creating
+- safe to run every startup
+- update existing clients deliberately (do not duplicate)
+
+4. Run migrations first, then run the app so startup seeding can insert client records.
 
 ### Multi-client guideline
 
@@ -395,9 +691,9 @@ public static class OpenIddictSeedData
 					Permissions.Endpoints.EndSession,
 					Permissions.GrantTypes.AuthorizationCode,
 					Permissions.ResponseTypes.Code,
-					Permissions.Scopes.OpenId,
-					Permissions.Scopes.Profile,
-					Permissions.Scopes.Email,
+					Permissions.Prefixes.Scope + Scopes.OpenId,
+					Permissions.Prefixes.Scope + Scopes.Profile,
+					Permissions.Prefixes.Scope + Scopes.Email,
 					Permissions.Prefixes.Scope + "orders.read",
 					Permissions.Prefixes.Scope + "orders.write"
 				},
@@ -430,9 +726,9 @@ public static class OpenIddictSeedData
 					Permissions.Endpoints.EndSession,
 					Permissions.GrantTypes.AuthorizationCode,
 					Permissions.ResponseTypes.Code,
-					Permissions.Scopes.OpenId,
-					Permissions.Scopes.Profile,
-					Permissions.Scopes.Email,
+					Permissions.Prefixes.Scope + Scopes.OpenId,
+					Permissions.Prefixes.Scope + Scopes.Profile,
+					Permissions.Prefixes.Scope + Scopes.Email,
 					Permissions.Prefixes.Scope + "orders.read"
 				},
 				Requirements =
@@ -497,8 +793,8 @@ With that information, you can seed the client safely and keep the setup auditab
 After adding OpenIddict + Identity model changes:
 
 ```powershell
-dotnet ef migrations add AddIdentityAndOpenIddict --project .\RazorPageShopManager
-dotnet ef database update --project .\RazorPageShopManager
+dotnet ef migrations add AddIdentityAndOpenIddict --project .\RazorPageIdentityManager
+dotnet ef database update --project .\RazorPageIdentityManager
 ```
 
 You should now have both Identity and OpenIddict tables.

@@ -1,0 +1,76 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>OIDC Callback</title>
+</head>
+<body>
+  <h2>OIDC Callback</h2>
+  <pre id="out">Processing...</pre>
+
+  <script>
+    const authority = "https://localhost:7203";
+    const clientId = "simple-spa-test";
+    const redirectUri = "http://localhost:5500/callback.html";
+
+    const out = document.getElementById("out");
+
+    async function run() {
+      const url = new URL(window.location.href);
+      const code = url.searchParams.get("code");
+      const state = url.searchParams.get("state");
+      const error = url.searchParams.get("error");
+      const errorDescription = url.searchParams.get("error_description");
+
+      if (error) {
+        out.textContent = "Authorize error: " + error + "\\n" + (errorDescription || "");
+        return;
+      }
+
+      const expectedState = sessionStorage.getItem("oauth_state");
+      if (!state || state !== expectedState) {
+        out.textContent = "Invalid state. Possible CSRF.";
+        return;
+      }
+
+      const codeVerifier = sessionStorage.getItem("pkce_code_verifier");
+      if (!code || !codeVerifier) {
+        out.textContent = "Missing code or code_verifier.";
+        return;
+      }
+
+      const body = new URLSearchParams();
+      body.set("grant_type", "authorization_code");
+      body.set("client_id", clientId);
+      body.set("code", code);
+      body.set("redirect_uri", redirectUri);
+      body.set("code_verifier", codeVerifier);
+
+      const response = await fetch(authority + "/connect/token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: body.toString()
+      });
+
+      const json = await response.json();
+
+      if (!response.ok) {
+        out.textContent = "Token error:\\n" + JSON.stringify(json, null, 2);
+        return;
+      }
+
+      out.textContent =
+        "Access Token (JWT):\\n" + (json.access_token || "(none)") +
+        "\\n\\nID Token:\\n" + (json.id_token || "(none)") +
+        "\\n\\nRefresh Token:\\n" + (json.refresh_token || "(none)") +
+        "\\n\\nFull response:\\n" + JSON.stringify(json, null, 2);
+    }
+
+    run().catch(err => {
+      out.textContent = "Unexpected error:\\n" + err;
+    });
+  </script>
+</body>
+</html>

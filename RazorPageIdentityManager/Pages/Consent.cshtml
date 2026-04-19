@@ -1,0 +1,20 @@
+﻿@page
+@model RazorPageIdentityManager.Pages.ConsentModel
+@{
+	ViewData["Title"] = "Consent";
+}
+
+<h2>Consent</h2>
+
+<p><strong>Application:</strong> @Model.ClientId</p>
+<p><strong>Requested scopes:</strong> @Model.Scope</p>
+
+<form method="post" action="@Model.ReturnUrl">
+	<input type="hidden" name="submit" value="allow" />
+	<button type="submit" class="btn btn-primary">Allow</button>
+</form>
+
+<form method="post" action="@Model.ReturnUrl" style="margin-top: 8px;">
+	<input type="hidden" name="submit" value="deny" />
+	<button type="submit" class="btn btn-outline-secondary">Deny</button>
+</form>
